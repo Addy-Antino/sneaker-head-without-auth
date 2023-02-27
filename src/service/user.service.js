@@ -5,6 +5,7 @@ const crypto =require('crypto')
 const token=require("../utils/jwtVerification")
 const tokenService = require('./token.service')
 const ErrorHandler = require('../utils/errorHandler')
+const { threadId } = require("worker_threads")
 
 ///for create account
 const createAcc=async(name,email,password)=>{
@@ -217,12 +218,13 @@ const getUser=async(req,res,next)=>{
 //exports update user profile
 
 const updateUserProfile=async(req,res,next)=>{
+
   const newUserData = {
     name: req.body.name,
     email: req.body.email,
   };
 
- 
+try{
   
   const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
     new: true,
@@ -230,13 +232,15 @@ const updateUserProfile=async(req,res,next)=>{
     useFindAndModify: false,
   });
 
-  res.status(200).json({
-    success: true,
-  });
-
-
-};
-
+  token(user,200,res)
+}
+catch(error){
+  return res.status(400).json({
+    success:false,
+    message:'email already exists'
+  })
+}
+}
 ///delete user profile
 const deleteUser= async(req,res,next)=>{
   
@@ -253,6 +257,7 @@ res.status(204).send({
 })
 
 }
+
 
 
 

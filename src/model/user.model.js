@@ -4,7 +4,7 @@ const bcryptjs = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const crypto = require("crypto")
 const Joi =  require("joi")
-
+const Token = require('./userver.model')
 const userSchema = new mongoose.Schema({
     name:{
             type : String,
@@ -91,6 +91,18 @@ userSchema.methods.getResetPasswordToken = function () {
 
     
   };
+
+  userSchema.methods.toJSON = function () {
+   const data = this;
+   const modifiedData = data.toObject();
+   delete modifiedData.password;
+   
+  
+    return modifiedData;
+
+    
+  };
+
 
 
 

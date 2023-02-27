@@ -1,5 +1,4 @@
 ///Creating auth tok9en and saving it in cookie
-
 const Token = (user,statusCode,res)=>{
     const token =user.getJWTToken();
 

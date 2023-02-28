@@ -7,12 +7,6 @@ const dotenv=require("dotenv")
 const connectDB= require("./config/database")
 
 
-//Handlig Uncaught exception
-process.on("uncaughtException",(err)=>{
-    console.log(`Error: ${err.message}`)
-    console.log("Shutting down the server due to uncaught exception!")
-    process.exit(1)
-})
 
 
 
@@ -33,4 +27,12 @@ process.on("unhandledRejection",(err)=>{
 server.close(()=>{
     process.exit(1);
 })
+})
+
+
+//Handlig Uncaught exception
+process.on("uncaughtException",(err)=>{
+    console.log(`Error: ${err.message}`)
+    console.log("Shutting down the server due to uncaught exception!")
+    process.exit(1)
 })

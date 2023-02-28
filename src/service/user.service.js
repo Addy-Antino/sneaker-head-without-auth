@@ -40,22 +40,22 @@ const createAcc=async(name,email,password)=>{
    }
 
 //For verify account
-const verify=async(req,res,next)=>{
+const verify=async(id,token,res,next)=>{
     // try {
-        const user = await User.findOne({ _id: req.params.id });
+        const user = await User.findOne({ _id: id });
         
         if (!user)  return next(new ErrorHandler("Invalid Link", 400));
     
-        const token = await Token.findOne({
-          userId: user._id,
-          token: req.params.token,
+        const tokens = await Token.findOne({
+          userId: id,
+          token: token,
         });
-        if (!token) return next(new ErrorHandler("Invalid Link", 400));
+        if (!tokens) return next(new ErrorHandler("Invalid Link", 400));
        
      
     
-        await User.findByIdAndUpdate( req.params.id, {is_verified: true });
-        await Token.findByIdAndRemove(token._id);
+        await User.findByIdAndUpdate( id, {is_verified: true });
+        await Token.findByIdAndRemove(tokens._id);
         
        return  res.status(200).json({
           success:true,
@@ -67,17 +67,14 @@ const verify=async(req,res,next)=>{
 
 //Login for user
 
-const login=async(email,password,req,res,next)=>{
+const login=async(email,password,res,next)=>{
     
-  if (!email || !password) {
-    return next(new ErrorHandler("Please Enter Email & Password", 400));
-  }
+  if (!email || !password) return next(new ErrorHandler("Please Enter Email & Password", 400));
 
   const user = await User.findOne({ email }).select("+password");
   
-  if (!user) {
-    return next(new ErrorHandler("Invalid email or password", 401));
-  }
+  if (!user) return next(new ErrorHandler("Invalid Email or Password", 400));
+
   if(user.is_verified ===false){
     return next(new ErrorHandler("Pending Account. Please Verify Your Email!",401))
   }
@@ -86,31 +83,25 @@ const login=async(email,password,req,res,next)=>{
 
   const isPasswordMatched = await user.comparePassword(password);
 
-  if (!isPasswordMatched) {
-    return next(new ErrorHandler("Invalid email or password", 401));
-  }
-  token(user,200,res)
-    
-   
+  if (!isPasswordMatched) return next(new ErrorHandler("Invalid Email or Password", 400));
+
+    token(user,200,res)
   };
 
 //Logout user
 
-const logout =async (req, res, next) => {
+const logout =async ( res) => {
   res.cookie("token", null, {
     expires: new Date(Date.now()),
     httpOnly: true,
   });
 
-  res.status(200).json({
-    success: true,
-    message: "Logged Out",
-  });
+ 
 };
     
 // Forgot Password
-const forgotPassword = async (req, res, next) => {
-  const user = await User.findOne({ email: req.body.email });
+const forgotPassword = async (email, req,res, next) => {
+  const user = await User.findOne({ email: email });
 
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
@@ -149,11 +140,11 @@ const forgotPassword = async (req, res, next) => {
 };
 
 // Reset Password
-const resetPassword = async (req, res, next) => {
+const resetPassword = async (password,confirmPassword,tokens, res, next) => {
  
   const resetPasswordToken = crypto
   .createHash("sha256")
-  .update(req.params.token)
+  .update(tokens)
   .digest("hex");
 
 const user = await User.findOne({
@@ -170,11 +161,11 @@ if (!user) {
   );
 }
 
-if (req.body.password !== req.body.confirmPassword) {
+if (password !== confirmPassword) {
   return next(new ErrorHandler("Password does not matched", 400));
 }
 
-user.password = req.body.password;
+user.password =password;
 user.resetPasswordToken = undefined;
 user.resetPasswordExpire = undefined;
 
@@ -185,15 +176,16 @@ token(user, 200, res);
 
 //Update user password
 
-const updatePassword = async(req,res,next)=>{
-  const user =  await User.findById(req.user.id).select('+password')
-  const ifPasswordMatched = await user.comparePassword(req.body.oldPassword)
+const updatePassword = async(id,oldpass,newPass,confirmPass, res,next)=>{
+  const user =  await User.findById(id).select('+password')
+ 
+  const ifPasswordMatched = await user.comparePassword(oldpass)
  
   if(!ifPasswordMatched) {return next(new ErrorHandler("Old password is incorrect", 400));}
 
-  if (req.body.newPassword !== req.body.confirmPassword) {return next(new ErrorHandler("password does not matched", 400));}
+  if (newPass !==confirmPass) {return next(new ErrorHandler("password does not matched", 400));}
 
-  user.password = req.body.newPassword;
+  user.password = newPass;
 
   await user.save();
 
@@ -203,9 +195,9 @@ const updatePassword = async(req,res,next)=>{
 
 //for get user profile
 
-const getUser=async(req,res,next)=>{
+const getUser=async(id,res,next)=>{
 
-  const user = await User.findById(req.user.id);
+  const user = await User.findById(id);
 
 
   res.status(200).json({
@@ -217,16 +209,16 @@ const getUser=async(req,res,next)=>{
 
 //exports update user profile
 
-const updateUserProfile=async(req,res,next)=>{
+const updateUserProfile=async(id,name,email,res,next)=>{
 
   const newUserData = {
-    name: req.body.name,
-    email: req.body.email,
+    name: name,
+    email:email,
   };
 
 try{
   
-  const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
+  const user = await User.findByIdAndUpdate(id, newUserData, {
     new: true,
     runValidators: true,
     useFindAndModify: false,
@@ -242,12 +234,12 @@ catch(error){
 }
 }
 ///delete user profile
-const deleteUser= async(req,res,next)=>{
+const deleteUser= async(id,res,next)=>{
   
-const user = await User.findById(req.user.id)
+const user = await User.findById(id)
 
 if(!user){
-  new ErrorHandler(`No valid user found with ${req.params.id}!`)
+  new ErrorHandler(`No valid user found with ${id}!`)
 }
 
 await user.remove()

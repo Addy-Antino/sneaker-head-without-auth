@@ -24,7 +24,9 @@ exports.createAccount=catchAsync(async(req,res,next)=>{
    
 //For verify account
 exports.verifyacc=catchAsync(async(req,res,next)=>{
-    Userservice.verify(req,res,next)
+    const id = req.params.id
+    const token = req.params.token
+    Userservice.verify(id,token,res,next)
 })
 
 
@@ -34,46 +36,62 @@ exports.verifyacc=catchAsync(async(req,res,next)=>{
 exports.loginforUser=catchAsync(async(req,res,next)=>{
     const { email, password } = req.body;
 
-   Userservice.login(email,password,req,res,next)
+   const user = Userservice.login(email,password,res,next)
+   
  });
 
 //Logout user
 
 exports.logoutforuser = catchAsync(async (req, res, next) => {
-  Userservice.logout(req,res,next)
+  Userservice.logout(res)
+  res.status(200).json({
+    success: true,
+    message: "Logged Out",
+  });
 });
     
 
 // Forgot Password
 exports.forgotPassword = catchAsync(async (req, res, next) => {
-Userservice.forgotPassword(req,res,next)
+  const email = req.body.email
+Userservice.forgotPassword(email,req,res,next)
 });
 
 // Reset Password
 exports.resetPassword = catchAsync(async (req, res, next) => {
-Userservice.resetPassword(req,res,next)
+  const password=req.body.password;
+  const confirmPassword=req.body.confirmPassword
+  const tokens=req.params.token
+Userservice.resetPassword(password,confirmPassword,tokens,res,next)
 });
 
 
 //update user Password
 exports.updatePassword = catchAsync(async(req,res,next)=>{
-  Userservice.updatePassword(req,res,next)
+  const oldpass= req.body.oldPassword
+  const newPass =req.body.newPassword
+  const confirmPass=req.body.confirmPassword
+  const id = req.user.id
+  Userservice.updatePassword(id,oldpass,newPass,confirmPass, res,next)
 })
 
 //update user profile
 exports.updateProfile =  catchAsync(async(req,res,next)=>{
-  Userservice.updateUserProfile(req,res,next)
+  const id = req.user.id
+  const name =req.body.name
+  const email = req.body.email
+  Userservice.updateUserProfile(id,name,email,res,next)
 })
 
 //for get user profile
 
 exports.getUserProfile = catchAsync(async(req,res,next)=>{
-  
-  Userservice.getUser(req,res,next)
+  const id = req.user.id
+  Userservice.getUser(id,res,next)
 
 });
 
-//exports update user profile
+
 
 
 
@@ -82,7 +100,7 @@ exports.getUserProfile = catchAsync(async(req,res,next)=>{
 //delete user profile
 
 exports.deleteUserProfile= catchAsync(async(req,res,next)=>{
-  
-  Userservice.deleteUser(req,res,next)
+  const id = req.user.id
+  Userservice.deleteUser(id,res,next)
 
 })

@@ -1,32 +1,39 @@
-const { verify } = require("jsonwebtoken");
 const catchAsync = require("../middleware/catchAsync")
 const Userservice =  require("../service/user.service")
 const ErrorHandler=require("../utils/errorHandler")
 
 
 ///for create account
+
 exports.createAccount=catchAsync(async(req,res,next)=>{
-    const {name , email , password} = req.body;
-     ///Checking if any fields are empty
-    if(!name || !email || !password){
-     throw new Error("Please enter the required fields",404)
-      }
-    const user = await  Userservice.createAcc(name,email,password);
-    if(!user){
-      throw new Error('something went wrong while creating user');
+  const {name , email , password} = req.body;
+   ///Checking if any fields are empty
+  if(!name || !email || !password){
+   throw new Error("Please enter the required fields",404)
     }
-    return res.status(201).json({
-      message:'user created successfully',
-      error:false,
-      data:user
-    })
- })
-   
+  const user = await  Userservice.createAcc(name,email,password);
+  if(!user){
+    throw new Error('something went wrong while creating user');
+  }
+  return res.status(201).json({
+    message:'user created successfully',
+    error:false,
+    data:user
+  })
+})
+ 
 //For verify account
 exports.verifyacc=catchAsync(async(req,res,next)=>{
     const id = req.params.id
     const token = req.params.token
-    Userservice.verify(id,token,res,next)
+  const data = await  Userservice.verify(id,token);
+  if(!data) throw new Error('verification failed')
+    res.status(200).json({
+      success:true,
+      verified:true,
+      message:'Email successfully verified'
+    })
+
 })
 
 
@@ -36,7 +43,12 @@ exports.verifyacc=catchAsync(async(req,res,next)=>{
 exports.loginforUser=catchAsync(async(req,res,next)=>{
     const { email, password } = req.body;
 
-   const user = Userservice.login(email,password,res,next)
+   const user =await Userservice.login(email,password);
+   res.status(200).cookie("token",user.token,user.option).json({
+    success:true,
+    user,
+  
+});
    
  });
 
@@ -54,7 +66,15 @@ exports.logoutforuser = catchAsync(async (req, res, next) => {
 // Forgot Password
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   const email = req.body.email
-Userservice.forgotPassword(email,req,res,next)
+  const host= req.get(
+    "host"
+  )
+ const protocol = req.protocol 
+await Userservice.forgotPassword(email,host,protocol)
+res.status(200).json({
+  success: true,
+  message: `Email sent to ${email} successfully`,
+});
 });
 
 // Reset Password
@@ -62,7 +82,11 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   const password=req.body.password;
   const confirmPassword=req.body.confirmPassword
   const tokens=req.params.token
-Userservice.resetPassword(password,confirmPassword,tokens,res,next)
+const user = await Userservice.resetPassword(password,confirmPassword,tokens)
+res.status(200).json({
+  success:true,
+  user,
+});
 });
 
 
@@ -72,7 +96,12 @@ exports.updatePassword = catchAsync(async(req,res,next)=>{
   const newPass =req.body.newPassword
   const confirmPass=req.body.confirmPassword
   const id = req.user.id
-  Userservice.updatePassword(id,oldpass,newPass,confirmPass, res,next)
+  const user =await Userservice.updatePassword(id,oldpass,newPass,confirmPass)
+    res.status(200).cookie("token",user.token,user.option).json({
+    success:true,
+    user,
+  
+})
 })
 
 //update user profile
@@ -80,19 +109,23 @@ exports.updateProfile =  catchAsync(async(req,res,next)=>{
   const id = req.user.id
   const name =req.body.name
   const email = req.body.email
-  Userservice.updateUserProfile(id,name,email,res,next)
+  const user = await Userservice.updateUserProfile(id,name,email)
+  res.status(200).cookie("token",user.token,user.option).json({
+    success:true,
+    user,
+  
 })
-
+})
 //for get user profile
 
 exports.getUserProfile = catchAsync(async(req,res,next)=>{
   const id = req.user.id
-  Userservice.getUser(id,res,next)
-
+  const user = await Userservice.getUser(id)
+  res.status(200).json({
+    success:true,
+    user,
+  });
 });
-
-
-
 
 
 
@@ -101,6 +134,13 @@ exports.getUserProfile = catchAsync(async(req,res,next)=>{
 
 exports.deleteUserProfile= catchAsync(async(req,res,next)=>{
   const id = req.user.id
-  Userservice.deleteUser(id,res,next)
+  const user = await Userservice.deleteUser(id)
+  Userservice.logout(res)
+  res.status(204).json({
+    success:true,
+    user,
+  })
+ 
 
 })
+

@@ -1,6 +1,6 @@
 ///Creating auth tok9en and saving it in cookie
-const Token = (user,statusCode,res)=>{
-    const token =user.getJWTToken();
+const Token = async (user)=>{
+    const token =await user.getJWTToken();
 
     const option ={
         expires: new Date(
@@ -8,11 +8,8 @@ const Token = (user,statusCode,res)=>{
         ),
         httpOnly:true,
     };
-    res.status(statusCode).cookie("token",token,option).json({
-        success:true,
-        user,
-        token
-    });
+    return {user,token,option};
+   
 };
 
 module.exports = Token;

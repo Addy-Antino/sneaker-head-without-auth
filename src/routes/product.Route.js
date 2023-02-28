@@ -5,7 +5,7 @@ const { getProducts, updateProduct, createProduct, deleteProduct } = require('..
 const router = express.Router();
 
 router.route('/new/product').post(ifAuthenticateduser,createProduct)
-// router.route('/products').get(getProducts)
+router.route('/products').get(getProducts)
 // router.route('/updateProduct').put(updateProduct)
 // router.route('/deleteProduct').delete(deleteProduct)
 

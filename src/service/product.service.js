@@ -15,13 +15,14 @@ const createProduct=async(body,res)=>{
   
 }
 
+const getProducts=async(req,res)=>{
+  const products =await Product.find();
+res.status(200).json({
+  success:true,
+  products
+})
 
-
-
-exports.getProducts=(req,res)=>{
-
-
-    res.status(200).json({message:"Route is working"})
+    
 }
 
 
@@ -35,4 +36,4 @@ exports.deleteProduct=(req,res)=>{
 
 
 
-module.exports={createProduct}
+module.exports={createProduct,getProducts}

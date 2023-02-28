@@ -22,6 +22,7 @@ Productservice.createProduct(body,res)
 //For get all products 
 exports.getProducts=catchAsync(async(req,res)=>{
 
+    Productservice.getProducts();
 
   
 })

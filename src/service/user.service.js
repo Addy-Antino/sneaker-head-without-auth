@@ -2,10 +2,10 @@ const User = require("../model/user.model")
 const Token= require("../model/userver.model")
 const sendMail=require('../utils/sendMail')
 const crypto =require('crypto')
-const token=require("../utils/jwtVerification")
+const tokenUtils=require("../utils/jwtVerification")
 const tokenService = require('./token.service')
 const ErrorHandler = require('../utils/errorHandler')
-const { threadId } = require("worker_threads")
+
 
 ///for create account
 const createAcc=async(name,email,password)=>{
@@ -40,52 +40,47 @@ const createAcc=async(name,email,password)=>{
    }
 
 //For verify account
-const verify=async(id,token,res,next)=>{
+const verify=async(id,token)=>{
     // try {
         const user = await User.findOne({ _id: id });
         
-        if (!user)  return next(new ErrorHandler("Invalid Link", 400));
+        if (!user)  throw new ErrorHandler("Invalid Link",404)
     
         const tokens = await Token.findOne({
           userId: id,
           token: token,
         });
-        if (!tokens) return next(new ErrorHandler("Invalid Link", 400));
+        if (!tokens) throw new ErrorHandler("Invalid Link",404)
        
      
     
         await User.findByIdAndUpdate( id, {is_verified: true });
         await Token.findByIdAndRemove(tokens._id);
         
-       return  res.status(200).json({
-          success:true,
-          verified:true,
-          message:'Email successfully verified'
-        })
-    
+       return true;
 }
 
 //Login for user
 
-const login=async(email,password,res,next)=>{
+const login=async(email,password)=>{
     
-  if (!email || !password) return next(new ErrorHandler("Please Enter Email & Password", 400));
+  if (!email || !password) throw new ErrorHandler("Please Enter Email & Password", 404);
 
   const user = await User.findOne({ email }).select("+password");
   
-  if (!user) return next(new ErrorHandler("Invalid Email or Password", 400));
+  if (!user)  throw new ErrorHandler("Invalid Email or Password", 401);
 
   if(user.is_verified ===false){
-    return next(new ErrorHandler("Pending Account. Please Verify Your Email!",401))
+    throw new ErrorHandler("Pending Account. Please Verify Your Email!",401)
   }
 
 
 
   const isPasswordMatched = await user.comparePassword(password);
 
-  if (!isPasswordMatched) return next(new ErrorHandler("Invalid Email or Password", 400));
-
-    token(user,200,res)
+  if (!isPasswordMatched) throw new ErrorHandler("Invalid Email or Password", 401);
+const {token,option} = await tokenUtils(user)
+    return {user,token,option};
   };
 
 //Logout user
@@ -100,21 +95,18 @@ const logout =async ( res) => {
 };
     
 // Forgot Password
-const forgotPassword = async (email, req,res, next) => {
+const forgotPassword = async (email,host,protocol) => {
   const user = await User.findOne({ email: email });
 
-  if (!user) {
-    return next(new ErrorHandler("User not found", 404));
-  }
+  if (!user) {  throw new ErrorHandler("User not found",404)}
+  
 
   // Get ResetPassword Token
   const resetToken = user.getResetPasswordToken();
 
   await user.save({ validateBeforeSave: false });
 
-  const resetPasswordUrl = `${req.protocol}://${req.get(
-    "host"
-  )}/api/v1/password/reset/${resetToken}`;
+  const resetPasswordUrl = `${protocol}://${host}/api/v1/password/reset/${resetToken}`;
 
   const message = `Your password reset token is :- \n\n ${resetPasswordUrl} \n\nIf you have not requested this email then, please ignore it.`;
 
@@ -124,23 +116,20 @@ const forgotPassword = async (email, req,res, next) => {
       subject: `Sneaker Heads Password Recovery`,
       message,
     });
+    return true;
 
-    res.status(200).json({
-      success: true,
-      message: `Email sent to ${user.email} successfully`,
-    });
   } catch (error) {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
     await user.save({ validateBeforeSave: false });
 
-    return next(new ErrorHandler(error.message, 500));
+    throw new ErrorHandler(error.message,500)
   }
 };
 
 // Reset Password
-const resetPassword = async (password,confirmPassword,tokens, res, next) => {
+const resetPassword = async (password,confirmPassword,tokens) => {
  
   const resetPasswordToken = crypto
   .createHash("sha256")
@@ -153,16 +142,11 @@ const user = await User.findOne({
 });
 
 if (!user) {
-  return next(
-    new ErrorHandler(
-      "Reset Password Token is invalid or has been expired",
-      400
-    )
-  );
+  throw new ErrorHandler("Reset password token is invaild or expired",400)
 }
 
 if (password !== confirmPassword) {
-  return next(new ErrorHandler("Password does not matched", 400));
+  throw new ErrorHandler("Password does not matched",400)
 }
 
 user.password =password;
@@ -171,45 +155,43 @@ user.resetPasswordExpire = undefined;
 
 await user.save();
 
-token(user, 200, res);
-};
+}
+
+
 
 //Update user password
 
-const updatePassword = async(id,oldpass,newPass,confirmPass, res,next)=>{
+const updatePassword = async(id,oldpass,newPass,confirmPass)=>{
   const user =  await User.findById(id).select('+password')
  
   const ifPasswordMatched = await user.comparePassword(oldpass)
  
-  if(!ifPasswordMatched) {return next(new ErrorHandler("Old password is incorrect", 400));}
+  if(!ifPasswordMatched) throw new ErrorHandler("Old password is incorrect", 400);
 
-  if (newPass !==confirmPass) {return next(new ErrorHandler("password does not matched", 400));}
+  if (newPass !==confirmPass) throw new ErrorHandler("password does not matched", 400);
 
   user.password = newPass;
 
   await user.save();
 
-  token(user,200,res)
+  const {token,option} = await tokenUtils(user)
+    return {user,token,option};
+  };
 
-}
 
 //for get user profile
 
-const getUser=async(id,res,next)=>{
+const getUser=async(id)=>{
 
   const user = await User.findById(id);
-
-
-  res.status(200).json({
-    success:true,
-    user,
-  });
+  return user;
+  
 };
 
 
 //exports update user profile
 
-const updateUserProfile=async(id,name,email,res,next)=>{
+const updateUserProfile=async(id,name,email)=>{
 
   const newUserData = {
     name: name,
@@ -224,17 +206,17 @@ try{
     useFindAndModify: false,
   });
 
-  token(user,200,res)
+  const {token,option} = await tokenUtils(user)
+  return {user,token,option};
+
 }
 catch(error){
-  return res.status(400).json({
-    success:false,
-    message:'email already exists'
-  })
+  throw new ErrorHandler("Email already exists",400)
 }
 }
+
 ///delete user profile
-const deleteUser= async(id,res,next)=>{
+const deleteUser= async(id)=>{
   
 const user = await User.findById(id)
 
@@ -243,11 +225,7 @@ if(!user){
 }
 
 await user.remove()
-res.status(204).send({
-  success:true,
-  user,
-})
-
+return user
 }
 
 

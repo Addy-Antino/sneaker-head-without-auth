@@ -1,39 +1,46 @@
 const ErrorHandler = require('../utils/errorHandler')
-const catchAsync = require('../middleware/catchAsync')
 const Product =  require('../model/product.model')
-const user = require('../model/user.model')
-const cloudinary =  require('cloudinary')
+const cloudinary = require("cloudinary"); //Todo remove for the timing
+const Pagination = require('../utils/pagination')
 
 
-const createProduct=async(body,res)=>{
-    
+//For creating a new product
+const createProduct=async(body)=>{
+  
   const product =await Product.create(body);
-  res.status(201).json({
-    success:true,
-    product
-   })
+    return product
   
 }
+//For gettting all the product on the dashboard
+const getProducts=async(query)=>{
+  const pagination = new Pagination(Product.find(),query).search();
+  const products =await pagination.query;
+  return products
+    
+}
 
-const getProducts=async(req,res)=>{
-  const products =await Product.find();
-res.status(200).json({
-  success:true,
-  products
+// for updating a product
+const updateProducts=async(id,body)=>{
+let product = await Product.findById(id);
+if(!product) throw new ErrorHandler("Product not found!",404)
+
+product =  await Product.findByIdAndUpdate(id,body,{
+  new:true,
+  runValidators:true,
+  useFindAndModify:false
 })
+ return product
+}
 
-    
+const deleteProducts=async(id)=>{
+  let product = await  Product.findById(id);
+  
+  if(!product) throw new ErrorHandler("Product not found",404)
+
+  product =Product.findByIdAndDelete(id);
+  return product;
 }
 
 
-exports.updateProduct=(req,res)=>{
 
-}
-
-exports.deleteProduct=(req,res)=>{
-    
-}
-
-
-
-module.exports={createProduct,getProducts}
+module.exports={createProduct,getProducts,updateProducts,deleteProducts}

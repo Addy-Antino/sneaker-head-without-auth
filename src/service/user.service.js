@@ -86,7 +86,7 @@ const {token,option} = await tokenUtils(user)
 //Logout user
 
 const logout =async ( res) => {
-  res.cookie("token", null, {
+   res.cookie("token", null, {
     expires: new Date(Date.now()),
     httpOnly: true,
   });
@@ -106,7 +106,7 @@ const forgotPassword = async (email,host,protocol) => {
 
   await user.save({ validateBeforeSave: false });
 
-  const resetPasswordUrl = `${protocol}://${host}/api/v1/password/reset/${resetToken}`;
+  const resetPasswordUrl = `${protocol}://192.168.11.76:3000/api/v1/password/reset/${resetToken}`;
 
   const message = `Your password reset token is :- \n\n ${resetPasswordUrl} \n\nIf you have not requested this email then, please ignore it.`;
 

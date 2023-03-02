@@ -1,6 +1,6 @@
 const catchAsync = require("../middleware/catchAsync")
 const Userservice =  require("../service/user.service")
-const ErrorHandler=require("../utils/errorHandler")
+// const ErrorHandler=require("../utils/errorHandler")
 
 
 ///for create account

@@ -1,8 +1,5 @@
 const mongoose = require("mongoose")
 const validator=require("validator")
-const bcryptjs = require("bcryptjs")
-const jwt = require("jsonwebtoken")
-const crypto = require("crypto")
 const productSchema = new mongoose.Schema({
   name:{
     type : String,
@@ -22,6 +19,10 @@ email:{
         type: String,
         required: [true, "Please Enter product Name"],
         trim: true,
+      },
+      quantity:{
+        type:Number,
+        required:[true,"plesae enter quantity of the product"]
       },
       
       price: {

@@ -44,6 +44,7 @@ exports.loginforUser=catchAsync(async(req,res,next)=>{
     const { email, password } = req.body;
 
    const user =await Userservice.login(email,password);
+   
    res.status(200).cookie("token",user.token,user.option).json({
     success:true,
     user,

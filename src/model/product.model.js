@@ -19,6 +19,10 @@ email:{
         type: String,
         required: [true, "Please Enter product Name"],
         trim: true,
+      },user:{
+        type:String,
+        required:true,
+        
       },
       quantity:{
         type:Number,

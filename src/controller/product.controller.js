@@ -1,20 +1,20 @@
 const ErrorHandler = require('../utils/errorHandler')
 const catchAsync = require('../middleware/catchAsync')
 const Productservice =  require('../service/product.service')
-
-
+const cloudinary = require('cloudinary')
+const multer =require('multer')
 //For creating a product
 exports.createProduct=catchAsync(async(req,res,next)=>{
 
-    const { name ,email,title , description,price,quantity,images} =req.body
+    const { name ,email,title , description,price,quantity} =req.body
     if(!name||!email||!title||!description||!price||!quantity){
         return next(new ErrorHandler('Please fill up the required fields',400))
+
     }
-    
 
     const body =req.body
-
-    const product = await Productservice.createProduct(body)
+    const id =req.user.id
+    const product = await Productservice.createProduct(body,id)
     res.status(201).json({
         success:true,
         product

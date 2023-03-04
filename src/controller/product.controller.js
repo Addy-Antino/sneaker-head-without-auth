@@ -1,8 +1,8 @@
 const ErrorHandler = require('../utils/errorHandler')
 const catchAsync = require('../middleware/catchAsync')
 const Productservice =  require('../service/product.service')
-const cloudinary = require('cloudinary')
-const multer =require('multer')
+
+
 //For creating a product
 exports.createProduct=catchAsync(async(req,res,next)=>{
 
@@ -14,7 +14,9 @@ exports.createProduct=catchAsync(async(req,res,next)=>{
 
     const body =req.body
     const id =req.user.id
-    const product = await Productservice.createProduct(body,id)
+    const image = req.files.image
+    
+    const product = await Productservice.createProduct(body,id,image)
     res.status(201).json({
         success:true,
         product

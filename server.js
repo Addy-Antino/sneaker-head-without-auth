@@ -1,16 +1,11 @@
 const app = require("./src/app");
-const cloudinary = require("cloudinary");
+const cloudinary = require("cloudinary").v2;
 const dotenv=require("dotenv")
 
 //connect with the database
 const connectDB= require("./config/database")
 
 
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
 
 
 //config path
@@ -20,6 +15,12 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
 
 
 connectDB()
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+
 const server = app.listen(process.env.PORT,()=>{
     console.log(`server is running on http://localhost:${process.env.PORT}`)
 })

@@ -39,20 +39,19 @@ email:{
         required:[true,"Please enter the description of your product"]
       } ,  
       
-      images: [
-        {
+      image: {
+        
           public_id: {
             type: String,
-            required: true,
+           
           },
           url: {
             type: String,
-            required: true,
+          
           },
-        },
-      ],
- 
-},
+         
+      },
+    },
 {
   timestamps:true,
 }

@@ -14,7 +14,10 @@ cloudinary.config({
 
 
 //config path
-dotenv.config({path:"./config/config.env"})
+if (process.env.NODE_ENV !== "PRODUCTION") {
+  dotenv.config({path:"./config/config.env"})
+}
+
 
 connectDB()
 const server = app.listen(process.env.PORT,()=>{

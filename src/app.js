@@ -18,7 +18,7 @@ const payment = require("./routes/payment.route")
 const cart = require("./routes/cart.route")
 const fileUpload =require ('express-fileupload')
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(fileUpload())
+app.use(fileUpload({ useTempFiles:true }))
 
 app.use(cors());
 app.use("/api/v1",product)
